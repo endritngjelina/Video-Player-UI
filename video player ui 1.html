@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Video Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .video-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            background: #000;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            padding: 20px;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.3s ease;
+        }
+
+        .video-container:hover .controls,
+        .controls.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .progress-container {
+            position: relative;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.1s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .progress-container:hover .progress-bar::after {
+            opacity: 1;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+
+        .btn:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .play-btn {
+            font-size: 24px;
+            width: 48px;
+            height: 48px;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .time-display {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        .right-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .captions-menu {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .captions-menu.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .captions-option {
+            display: block;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+            font-size: 14px;
+        }
+
+        .captions-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            z-index: 100;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .keyboard-shortcuts {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .keyboard-shortcuts.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            gap: 20px;
+        }
+
+        .shortcut-key {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .pip-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        .pip-indicator.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .volume-container {
+                display: none;
+            }
+            
+            .controls {
+                padding: 15px;
+            }
+            
+            .time-display {
+                font-size: 12px;
+                min-width: 60px;
+            }
+            
+            .keyboard-shortcuts {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <div class="video-wrapper">
+            <video id="video" preload="metadata">
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <div class="loading" id="loading"></div>
+            <div class="pip-indicator" id="pipIndicator">Picture-in-Picture Active</div>
+            
+            <div class="controls" id="controls">
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                
+                <div class="controls-row">
+                    <button class="btn play-btn" id="playBtn">▶️</button>
+                    
+                    <div class="volume-container">
+                        <button class="btn" id="volumeBtn">🔊</button>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    
+                    <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+                    
+                    <div class="right-controls">
+                        <button class="btn" id="captionsBtn">CC</button>
+                        <div class="captions-menu" id="captionsMenu">
+                            <a href="#" class="captions-option" data-lang="off">Off</a>
+                            <a href="#" class="captions-option" data-lang="en">English</a>
+                            <a href="#" class="captions-option" data-lang="es">Spanish</a>
+                        </div>
+                        
+                        <button class="btn" id="pipBtn">📱</button>
+                        <button class="btn" id="fullscreenBtn">⛶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-shortcuts" id="keyboardShortcuts">
+        <div class="shortcut-item">
+            <span>Play/Pause</span>
+            <span class="shortcut-key">Space</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Fullscreen</span>
+            <span class="shortcut-key">F</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Mute</span>
+            <span class="shortcut-key">M</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Forward 10s</span>
+            <span class="shortcut-key">→</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Backward 10s</span>
+            <span class="shortcut-key">←</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Volume Up</span>
+            <span class="shortcut-key">↑</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Volume Down</span>
+            <span class="shortcut-key">↓</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Picture-in-Picture</span>
+            <span class="shortcut-key">P</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Show Shortcuts</span>
+            <span class="shortcut-key">?</span>
+        </div>
+    </div>
+
+    <script>
+        class VideoPlayer {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.playBtn = document.getElementById('playBtn');
+                this.volumeBtn = document.getElementById('volumeBtn');
+                this.volumeSlider = document.getElementById('volumeSlider');
+                this.progressContainer = document.getElementById('progressContainer');
+                this.progressBar = document.getElementById('progressBar');
+                this.timeDisplay = document.getElementById('timeDisplay');
+                this.fullscreenBtn = document.getElementById('fullscreenBtn');
+                this.captionsBtn = document.getElementById('captionsBtn');
+                this.captionsMenu = document.getElementById('captionsMenu');
+                this.pipBtn = document.getElementById('pipBtn');
+                this.controls = document.getElementById('controls');
+                this.loading = document.getElementById('loading');
+                this.pipIndicator = document.getElementById('pipIndicator');
+                this.keyboardShortcuts = document.getElementById('keyboardShortcuts');
+                
+                this.isPlaying = false;
+                this.isMuted = false;
+                this.previousVolume = 1;
+                this.hideControlsTimeout = null;
+                this.captionsEnabled = false;
+                
+                this.initializePlayer();
+                this.attachEventListeners();
+                this.setupKeyboardShortcuts();
+            }
+
+            initializePlayer() {
+                this.video.volume = 1;
+                this.volumeSlider.value = 1;
+                this.updateTimeDisplay();
+                this.showLoading();
+                
+                // Check if picture-in-picture is supported
+                if (!document.pictureInPictureEnabled) {
+                    this.pipBtn.style.display = 'none';
+                }
+            }
+
+            attachEventListeners() {
+                // Play/Pause
+                this.playBtn.addEventListener('click', () => this.togglePlay());
+                this.video.addEventListener('click', () => this.togglePlay());
+                
+                // Volume
+                this.volumeBtn.addEventListener('click', () => this.toggleMute());
+                this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+                
+                // Progress
+                this.progressContainer.addEventListener('click', (e) => this.seek(e));
+                this.video.addEventListener('timeupdate', () => this.updateProgress());
+                
+                // Fullscreen
+                this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+                
+                // Captions
+                this.captionsBtn.addEventListener('click', () => this.toggleCaptionsMenu());
+                this.captionsMenu.addEventListener('click', (e) => this.handleCaptionsSelection(e));
+                
+                // Picture-in-Picture
+                this.pipBtn.addEventListener('click', () => this.togglePiP());
+                
+                // Video events
+                this.video.addEventListener('loadedmetadata', () => {
+                    this.updateTimeDisplay();
+                    this.hideLoading();
+                });
+                
+                this.video.addEventListener('waiting', () => this.showLoading());
+                this.video.addEventListener('canplay', () => this.hideLoading());
+                this.video.addEventListener('ended', () => this.videoEnded());
+                
+                this.video.addEventListener('enterpictureinpicture', () => {
+                    this.pipIndicator.classList.add('show');
+                });
+                
+                this.video.addEventListener('leavepictureinpicture', () => {
+                    this.pipIndicator.classList.remove('show');
+                });
+                
+                // Controls visibility
+                this.video.addEventListener('mousemove', () => this.showControls());
+                this.video.addEventListener('mouseleave', () => this.hideControls());
+                
+                // Close captions menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!this.captionsBtn.contains(e.target) && !this.captionsMenu.contains(e.target)) {
+                        this.captionsMenu.classList.remove('show');
+                    }
+                });
+            }
+
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Prevent default behavior for video shortcuts
+                    if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyF', 'KeyM', 'KeyP'].includes(e.code)) {
+                        e.preventDefault();
+                    }
+                    
+                    switch(e.code) {
+                        case 'Space':
+                            this.togglePlay();
+                            break;
+                        case 'KeyF':
+                            this.toggleFullscreen();
+                            break;
+                        case 'KeyM':
+                            this.toggleMute();
+                            break;
+                        case 'ArrowLeft':
+                            this.skip(-10);
+                            break;
+                        case 'ArrowRight':
+                            this.skip(10);
+                            break;
+                        case 'ArrowUp':
+                            this.adjustVolume(0.1);
+                            break;
+                        case 'ArrowDown':
+                            this.adjustVolume(-0.1);
+                            break;
+                        case 'KeyP':
+                            this.togglePiP();
+                            break;
+                        case 'Slash':
+                            if (e.shiftKey) { // ? key
+                                this.toggleKeyboardShortcuts();
+                            }
+                            break;
+                    }
+                });
+            }
+
+            togglePlay() {
+                if (this.isPlaying) {
+                    this.video.pause();
+                    this.playBtn.textContent = '▶️';
+                    this.isPlaying = false;
+                } else {
+                    this.video.play();
+                    this.playBtn.textContent = '⏸️';
+                    this.isPlaying = true;
+                }
+            }
+
+            toggleMute() {
+                if (this.isMuted) {
+                    this.video.volume = this.previousVolume;
+                    this.volumeSlider.value = this.previousVolume;
+                    this.volumeBtn.textContent = this.previousVolume > 0.5 ? '🔊' : '🔉';
+                    this.isMuted = false;
+                } else {
+                    this.previousVolume = this.video.volume;
+                    this.video.volume = 0;
+                    this.volumeSlider.value = 0;
+                    this.volumeBtn.textContent = '🔇';
+                    this.isMuted = true;
+                }
+            }
+
+            setVolume(value) {
+                this.video.volume = value;
+                this.isMuted = value == 0;
+                
+                if (value == 0) {
+                    this.volumeBtn.textContent = '🔇';
+                } else if (value > 0.5) {
+                    this.volumeBtn.textContent = '🔊';
+                } else {
+                    this.volumeBtn.textContent = '🔉';
+                }
+            }
+
+            adjustVolume(change) {
+                const newVolume = Math.max(0, Math.min(1, this.video.volume + change));
+                this.setVolume(newVolume);
+                this.volumeSlider.value = newVolume;
+            }
+
+            seek(e) {
+                const rect = this.progressContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const width = rect.width;
+                const percentage = clickX / width;
+                const newTime = percentage * this.video.duration;
+                this.video.currentTime = newTime;
+            }
+
+            updateProgress() {
+                if (this.video.duration) {
+                    const percentage = (this.video.currentTime / this.video.duration) * 100;
+                    this.progressBar.style.width = `${percentage}%`;
+                    this.updateTimeDisplay();
+                }
+            }
+
+            updateTimeDisplay() {
+                const current = this.formatTime(this.video.currentTime);
+                const duration = this.formatTime(this.video.duration);
+                this.timeDisplay.textContent = `${current} / ${duration}`;
+            }
+
+            formatTime(time) {
+                if (isNaN(time)) return '0:00';
+                const minutes = Math.floor(time / 60);
+                const seconds = Math.floor(time % 60);
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            skip(seconds) {
+                this.video.currentTime = Math.max(0, Math.min(this.video.duration, this.video.currentTime + seconds));
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    this.video.parentElement.requestFullscreen();
+                    this.fullscreenBtn.textContent = '⛶';
+                } else {
+                    document.exitFullscreen();
+                    this.fullscreenBtn.textContent = '⛶';
+                }
+            }
+
+            toggleCaptionsMenu() {
+                this.captionsMenu.classList.toggle('show');
+            }
+
+            handleCaptionsSelection(e) {
+                if (e.target.classList.contains('captions-option')) {
+                    e.preventDefault();
+                    const lang = e.target.dataset.lang;
+                    this.captionsEnabled = lang !== 'off';
+                    this.captionsBtn.style.opacity = this.captionsEnabled ? '1' : '0.7';
+                    this.captionsMenu.classList.remove('show');
+                }
+            }
+
+            async togglePiP() {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                    } else {
+                        await this.video.requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.log('Picture-in-Picture error:', error);
+                }
+            }
+
+            showControls() {
+                this.controls.classList.add('show');
+                clearTimeout(this.hideControlsTimeout);
+                this.hideControlsTimeout = setTimeout(() => {
+                    if (this.isPlaying) {
+                        this.controls.classList.remove('show');
+                    }
+                }, 3000);
+            }
+
+            hideControls() {
+                if (this.isPlaying) {
+                    this.hideControlsTimeout = setTimeout(() => {
+                        this.controls.classList.remove('show');
+                    }, 1000);
+                }
+            }
+
+            showLoading() {
+                this.loading.style.display = 'block';
+            }
+
+            hideLoading() {
+                this.loading.style.display = 'none';
+            }
+
+            videoEnded() {
+                this.playBtn.textContent = '▶️';
+                this.isPlaying = false;
+                this.controls.classList.add('show');
+            }
+
+            toggleKeyboardShortcuts() {
+                this.keyboardShortcuts.classList.toggle('show');
+                setTimeout(() => {
+                    this.keyboardShortcuts.classList.remove('show');
+                }, 5000);
+            }
+        }
+
+        // Initialize the video player when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new VideoPlayer();
+        });
+    </script>
+</body>
+</html>
