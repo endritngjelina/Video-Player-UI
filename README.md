@@ -30,10 +30,6 @@ Common quick edits (per variant):
 - Styling: edit the `<style>` section (if included) or any linked `.css` file.
 - Controls/behavior: edit any `<script>` section (if included) or linked `.js` file.
 
-## Screenshots / Demo (optional)
-
-Add screenshots or a short GIF here to show each UI variant.
-
 ## License
 
 See `LICENSE`.
