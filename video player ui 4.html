@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Video Player</title>
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #2a2a2a;
+            --accent-color: #007bff;
+            --accent-hover: #0066cc;
+            --text-color: #ffffff;
+            --text-muted: #b0b0b0;
+            --border-color: #333;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --hover-color: rgba(255, 255, 255, 0.1);
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .video-container {
+            position: relative;
+            max-width: 1200px;
+            width: 100%;
+            background: var(--primary-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+
+        .video-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+            cursor: pointer;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px 24px;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .video-container:hover .controls,
+        .controls.show {
+            transform: translateY(0);
+        }
+
+        .progress-section {
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            position: relative;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: height 0.2s ease;
+        }
+
+        .progress-container:hover {
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s ease;
+            position: relative;
+        }
+
+        .progress-handle {
+            position: absolute;
+            top: 50%;
+            right: -8px;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
+        }
+
+        .progress-container:hover .progress-handle {
+            opacity: 1;
+        }
+
+        .progress-handle:hover {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .controls-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .controls-center {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .controls-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-width: 40px;
+            height: 40px;
+        }
+
+        .btn:hover {
+            background: var(--hover-color);
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            transition: var(--transition);
+        }
+
+        .volume-slider:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .volume-display {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 30px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 160px;
+            display: none;
+            margin-bottom: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            color: var(--text-color);
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--hover-color);
+        }
+
+        .dropdown-item.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-color);
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .shortcuts-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 320px;
+            display: none;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+        }
+
+        .shortcuts-panel.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .shortcuts-title {
+            color: var(--text-color);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .shortcut-key {
+            background: var(--primary-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .quality-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .quality-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-color);
+        }
+
+        .playback-speed {
+            font-size: 13px;
+            color: var(--text-muted);
+            min-width: 40px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Fullscreen styles */
+        .video-container:-webkit-full-screen {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            max-width: none;
+        }
+
+        .video-container:-moz-full-screen {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            max-width: none;
+        }
+
+        .video-container:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            max-width: none;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .controls {
+                padding: 15px;
+            }
+
+            .controls-center {
+                display: none;
+            }
+
+            .volume-container {
+                position: relative;
+            }
+
+            .volume-slider {
+                width: 50px;
+            }
+
+            .shortcuts-panel {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                right: auto;
+                max-width: 90vw;
+            }
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover .tooltip {
+            opacity: 1;
+        }
+
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            display: none;
+            text-align: center;
+            max-width: 320px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-error {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .video-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-container:hover .video-title {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container" id="videoContainer">
+        <div class="video-title">Big Buck Bunny - Demo Video</div>
+        <div class="video-wrapper">
+            <video id="videoPlayer" preload="metadata" crossorigin="anonymous">
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                <track kind="captions" src="" srclang="en" label="English" default>
+                Your browser does not support the video tag.
+            </video>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <span>Loading video...</span>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                Failed to load video. Please try again.
+                <button class="close-error" id="closeError">&times;</button>
+            </div>
+        </div>
+
+        <div class="controls" id="controls">
+            <div class="progress-section">
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-handle" id="progressHandle"></div>
+                    </div>
+                </div>
+                <div class="time-info">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+            
+            <div class="controls-row">
+                <div class="controls-left">
+                    <button class="btn btn-primary" id="playPauseBtn">
+                        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                        <div class="tooltip">Play/Pause (Space)</div>
+                    </button>
+
+                    <div class="volume-container">
+                        <button class="btn" id="volumeBtn">
+                            <svg id="volumeHighIcon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                            </svg>
+                            <svg id="volumeLowIcon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                                <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
+                            </svg>
+                            <svg id="volumeMuteIcon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                            </svg>
+                            <div class="tooltip">Mute (M)</div>
+                        </button>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+                        <div class="volume-display" id="volumeDisplay">50</div>
+                    </div>
+                </div>
+
+                <div class="controls-center">
+                    <button class="btn" id="rewindBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                        </svg>
+                        <div class="tooltip">Rewind 10s (←)</div>
+                    </button>
+                    
+                    <button class="btn" id="forwardBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
+                        </svg>
+                        <div class="tooltip">Forward 10s (→)</div>
+                    </button>
+                </div>
+
+                <div class="controls-right">
+                    <button class="btn" id="speedBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.38 8.57l-1.23 1.85a8 8 0 01-.22 7.58H5.07A8 8 0 0115.58 6.85l1.85-1.23A10 10 0 003.35 19a2 2 0 001.72 1h13.85a2 2 0 001.74-1 10 10 0 00-.27-10.43z"/>
+                            <path d="M10.59 15.41a2 2 0 002.83 0l5.66-5.66a2 2 0 000-2.83 2 2 0 00-2.83 0L12 11.17 7.76 6.93a2 2 0 00-2.83 2.83l5.66 5.65z"/>
+                        </svg>
+                        <div class="tooltip">Playback Speed</div>
+                        <div class="dropdown-menu" id="speedMenu">
+                            <div class="dropdown-item" data-speed="0.5">0.5x</div>
+                            <div class="dropdown-item" data-speed="0.75">0.75x</div>
+                            <div class="dropdown-item active" data-speed="1">Normal</div>
+                            <div class="dropdown-item" data-speed="1.25">1.25x</div>
+                            <div class="dropdown-item" data-speed="1.5">1.5x</div>
+                            <div class="dropdown-item" data-speed="2">2x</div>
+                        </div>
+                    </button>
+
+                    <button class="btn" id="qualityBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 15c-.83 0-1.5-.67-1.5-1.5S11.17 15 12 15s1.5.67 1.5 1.5S12.83 18 12 18zm1.5-5.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5z"/>
+                        </svg>
+                        <div class="tooltip">Quality</div>
+                        <div class="dropdown-menu" id="qualityMenu">
+                            <div class="dropdown-item active" data-quality="auto">Auto</div>
+                            <div class="dropdown-item" data-quality="1080p">1080p</div>
+                            <div class="dropdown-item" data-quality="720p">720p</div>
+                            <div class="dropdown-item" data-quality="480p">480p</div>
+                        </div>
+                    </button>
+
+                    <button class="btn" id="captionsBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"/>
+                        </svg>
+                        <div class="tooltip">Captions</div>
+                        <div class="dropdown-menu" id="captionsMenu">
+                            <div class="dropdown-item active" data-lang="off">Off</div>
+                            <div class="dropdown-item" data-lang="en">English</div>
+                        </div>
+                    </button>
+
+                    <button class="btn" id="pipBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+                        </svg>
+                        <div class="tooltip">Picture-in-Picture</div>
+                    </button>
+
+                    <button class="btn" id="fullscreenBtn">
+                        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                        </svg>
+                        <svg id="exitFullscreenIcon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                        </svg>
+                        <div class="tooltip">Fullscreen (F)</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="shortcuts-panel" id="shortcutsPanel">
+        <div class="shortcuts-title">Keyboard Shortcuts</div>
+        <div class="shortcut-item">
+            <span>Play/Pause</span>
+            <span class="shortcut-key">Space</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Volume Up</span>
+            <span class="shortcut-key">↑</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Volume Down</span>
+            <span class="shortcut-key">↓</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Seek Forward</span>
+            <span class="shortcut-key">→</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Seek Backward</span>
+            <span class="shortcut-key">←</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Fullscreen</span>
+            <span class="shortcut-key">F</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Mute</span>
+            <span class="shortcut-key">M</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Show Shortcuts</span>
+            <span class="shortcut-key">?</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Speed Up</span>
+            <span class="shortcut-key">Shift + &gt;</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Slow Down</span>
+            <span class="shortcut-key">Shift + &lt;</span>
+        </div>
+    </div>
+
+    <script>
+        class ProfessionalVideoPlayer {
+            constructor() {
+                this.initializeElements();
+                this.initializeState();
+                this.setupEventListeners();
+                this.initializePlayer();
+            }
+
+            initializeElements() {
+                this.video = document.getElementById('videoPlayer');
+                this.container = document.getElementById('videoContainer');
+                this.controls = document.getElementById('controls');
+                this.playPauseBtn = document.getElementById('playPauseBtn');
+                this.playIcon = document.getElementById('playIcon');
+                this.pauseIcon = document.getElementById('pauseIcon');
+                this.volumeBtn = document.getElementById('volumeBtn');
+                this.volumeHighIcon = document.getElementById('volumeHighIcon');
+                this.volumeLowIcon = document.getElementById('volumeLowIcon');
+                this.volumeMuteIcon = document.getElementById('volumeMuteIcon');
+                this.volumeSlider = document.getElementById('volumeSlider');
+                this.volumeDisplay = document.getElementById('volumeDisplay');
+                this.progressContainer = document.getElementById('progressContainer');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressHandle = document.getElementById('progressHandle');
+                this.currentTime = document.getElementById('currentTime');
+                this.duration = document.getElementById('duration');
+                this.rewindBtn = document.getElementById('rewindBtn');
+                this.forwardBtn = document.getElementById('forwardBtn');
+                this.speedBtn = document.getElementById('speedBtn');
+                this.speedMenu = document.getElementById('speedMenu');
+                this.qualityBtn = document.getElementById('qualityBtn');
+                this.qualityMenu = document.getElementById('qualityMenu');
+                this.captionsBtn = document.getElementById('captionsBtn');
+                this.captionsMenu = document.getElementById('captionsMenu');
+                this.pipBtn = document.getElementById('pipBtn');
+                this.fullscreenBtn = document.getElementById('fullscreenBtn');
+                this.fullscreenIcon = document.getElementById('fullscreenIcon');
+                this.exitFullscreenIcon = document.getElementById('exitFullscreenIcon');
+                this.loading = document.getElementById('loading');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.closeError = document.getElementById('closeError');
+                this.shortcutsPanel = document.getElementById('shortcutsPanel');
+            }
+
+            initializeState() {
+                this.isDragging = false;
+                this.controlsTimeout = null;
+                this.lastVolume = 50;
+                this.currentSpeed = 1;
+                this.isBuffering = false;
+                this.activeDropdown = null;
+            }
+
+            setupEventListeners() {
+                // Video events
+                this.video.addEventListener('loadstart', () => this.handleLoadStart());
+                this.video.addEventListener('canplay', () => this.handleCanPlay());
+                this.video.addEventListener('loadedmetadata', () => this.handleLoadedMetadata());
+                this.video.addEventListener('timeupdate', () => this.handleTimeUpdate());
+                this.video.addEventListener('ended', () => this.handleVideoEnded());
+                this.video.addEventListener('play', () => this.updatePlayPauseIcon());
+                this.video.addEventListener('pause', () => this.updatePlayPauseIcon());
+                this.video.addEventListener('waiting', () => this.handleBuffering(true));
+                this.video.addEventListener('canplaythrough', () => this.handleBuffering(false));
+                this.video.addEventListener('error', () => this.handleError());
+                this.video.addEventListener('click', () => this.togglePlayPause());
+
+                // Control events
+                this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+                this.volumeBtn.addEventListener('click', () => this.toggleMute());
+                this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+                this.rewindBtn.addEventListener('click', () => this.rewind());
+                this.forwardBtn.addEventListener('click', () => this.forward());
+                this.speedBtn.addEventListener('click', () => this.toggleSpeedMenu());
+                this.qualityBtn.addEventListener('click', () => this.toggleQualityMenu());
+                this.captionsBtn.addEventListener('click', () => this.toggleCaptionsMenu());
+                this.pipBtn.addEventListener('click', () => this.togglePip());
+                this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+                this.closeError.addEventListener('click', () => this.errorMessage.style.display = 'none');
+
+                // Progress bar events
+                this.progressContainer.addEventListener('click', (e) => this.handleProgressClick(e));
+                this.progressHandle.addEventListener('mousedown', () => this.startProgressDrag());
+                document.addEventListener('mousemove', (e) => this.handleProgressDrag(e));
+                document.addEventListener('mouseup', () => this.stopProgressDrag());
+
+                // Dropdown events
+                this.speedMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', (e) => this.setPlaybackSpeed(e.target.dataset.speed));
+                });
+                
+                this.qualityMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', (e) => this.setQuality(e.target.dataset.quality));
+                });
+                
+                this.captionsMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', (e) => this.setCaptions(e.target.dataset.lang));
+                });
+
+                // Fullscreen events
+                document.addEventListener('fullscreenchange', () => this.updateFullscreenIcon());
+                document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenIcon());
+                document.addEventListener('mozfullscreenchange', () => this.updateFullscreenIcon());
+                document.addEventListener('MSFullscreenChange', () => this.updateFullscreenIcon());
+
+                // Keyboard events
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+
+                // Mouse events
+                this.container.addEventListener('mousemove', () => this.showControls());
+                this.container.addEventListener('mouseleave', () => this.hideControls());
+
+                // Close dropdowns when clicking elsewhere
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.dropdown-menu') && !e.target.closest('.btn')) {
+                        this.closeAllDropdowns();
+                    }
+                });
+            }
+
+            initializePlayer() {
+                // Set initial volume
+                this.video.volume = this.volumeSlider.value / 100;
+                this.updateVolumeIcons();
+                
+                // Show controls initially
+                this.controls.classList.add('show');
+                setTimeout(() => {
+                    this.hideControls();
+                }, 3000);
+            }
+
+            handleLoadStart() {
+                this.loading.style.display = 'flex';
+                this.errorMessage.style.display = 'none';
+            }
+
+            handleCanPlay() {
+                this.loading.style.display = 'none';
+            }
+
+            handleLoadedMetadata() {
+                this.duration.textContent = this.formatTime(this.video.duration);
+            }
+
+            handleTimeUpdate() {
+                this.currentTime.textContent = this.formatTime(this.video.currentTime);
+                const progress = (this.video.currentTime / this.video.duration) * 100;
+                this.progressBar.style.width = `${progress}%`;
+            }
+
+            handleVideoEnded() {
+                this.playIcon.style.display = 'block';
+                this.pauseIcon.style.display = 'none';
+            }
+
+            updatePlayPauseIcon() {
+                if (this.video.paused) {
+                    this.playIcon.style.display = 'block';
+                    this.pauseIcon.style.display = 'none';
+                } else {
+                    this.playIcon.style.display = 'none';
+                    this.pauseIcon.style.display = 'block';
+                }
+            }
+
+            handleBuffering(isBuffering) {
+                this.isBuffering = isBuffering;
+                this.loading.style.display = isBuffering ? 'flex' : 'none';
+            }
+
+            handleError() {
+                this.loading.style.display = 'none';
+                this.errorMessage.style.display = 'block';
+            }
+
+            togglePlayPause() {
+                if (this.video.paused) {
+                    this.video.play();
+                } else {
+                    this.video.pause();
+                }
+            }
+
+            toggleMute() {
+                this.video.muted = !this.video.muted;
+                if (this.video.muted) {
+                    this.lastVolume = this.volumeSlider.value;
+                    this.volumeSlider.value = 0;
+                } else {
+                    this.volumeSlider.value = this.lastVolume;
+                }
+                this.setVolume(this.volumeSlider.value);
+            }
+
+            setVolume(value) {
+                this.video.volume = value / 100;
+                this.volumeDisplay.textContent = value;
+                this.updateVolumeIcons();
+            }
+
+            updateVolumeIcons() {
+                const volume = this.video.volume;
+                
+                if (this.video.muted || volume === 0) {
+                    this.volumeHighIcon.style.display = 'none';
+                    this.volumeLowIcon.style.display = 'none';
+                    this.volumeMuteIcon.style.display = 'block';
+                } else if (volume < 0.5) {
+                    this.volumeHighIcon.style.display = 'none';
+                    this.volumeLowIcon.style.display = 'block';
+                    this.volumeMuteIcon.style.display = 'none';
+                } else {
+                    this.volumeHighIcon.style.display = 'block';
+                    this.volumeLowIcon.style.display = 'none';
+                    this.volumeMuteIcon.style.display = 'none';
+                }
+            }
+
+            rewind() {
+                this.video.currentTime = Math.max(0, this.video.currentTime - 10);
+            }
+
+            forward() {
+                this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 10);
+            }
+
+            toggleSpeedMenu() {
+                this.closeAllDropdowns();
+                this.speedMenu.classList.toggle('show');
+                this.activeDropdown = this.speedMenu;
+            }
+
+            setPlaybackSpeed(speed) {
+                this.currentSpeed = parseFloat(speed);
+                this.video.playbackRate = this.currentSpeed;
+                
+                // Update active state
+                this.speedMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (parseFloat(item.dataset.speed) === this.currentSpeed) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                this.speedMenu.classList.remove('show');
+                this.activeDropdown = null;
+            }
+
+            toggleQualityMenu() {
+                this.closeAllDropdowns();
+                this.qualityMenu.classList.toggle('show');
+                this.activeDropdown = this.qualityMenu;
+            }
+
+            setQuality(quality) {
+                // Update active state
+                this.qualityMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.quality === quality) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                this.qualityMenu.classList.remove('show');
+                this.activeDropdown = null;
+            }
+
+            toggleCaptionsMenu() {
+                this.closeAllDropdowns();
+                this.captionsMenu.classList.toggle('show');
+                this.activeDropdown = this.captionsMenu;
+            }
+
+            setCaptions(lang) {
+                // Update active state
+                this.captionsMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.lang === lang) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                this.captionsMenu.classList.remove('show');
+                this.activeDropdown = null;
+            }
+
+            togglePip() {
+                if (document.pictureInPictureElement) {
+                    document.exitPictureInPicture();
+                } else if (document.pictureInPictureEnabled) {
+                    this.video.requestPictureInPicture();
+                }
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    if (this.container.requestFullscreen) {
+                        this.container.requestFullscreen();
+                    } else if (this.container.mozRequestFullScreen) {
+                        this.container.mozRequestFullScreen();
+                    } else if (this.container.webkitRequestFullscreen) {
+                        this.container.webkitRequestFullscreen();
+                    } else if (this.container.msRequestFullscreen) {
+                        this.container.msRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            }
+
+            updateFullscreenIcon() {
+                const isFullscreen = document.fullscreenElement || 
+                                    document.webkitFullscreenElement || 
+                                    document.mozFullScreenElement || 
+                                    document.msFullscreenElement;
+                
+                if (isFullscreen) {
+                    this.fullscreenIcon.style.display = 'none';
+                    this.exitFullscreenIcon.style.display = 'block';
+                } else {
+                    this.fullscreenIcon.style.display = 'block';
+                    this.exitFullscreenIcon.style.display = 'none';
+                }
+            }
+
+            handleProgressClick(e) {
+                const rect = this.progressContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                this.video.currentTime = pos * this.video.duration;
+            }
+
+            startProgressDrag() {
+                this.isDragging = true;
+                this.container.style.cursor = 'grabbing';
+                this.progressHandle.style.transform = 'translateY(-50%) scale(1.3)';
+            }
+
+            handleProgressDrag(e) {
+                if (!this.isDragging) return;
+                
+                const rect = this.progressContainer.getBoundingClientRect();
+                let pos = (e.clientX - rect.left) / rect.width;
+                pos = Math.max(0, Math.min(1, pos));
+                
+                this.progressBar.style.width = `${pos * 100}%`;
+                this.video.currentTime = pos * this.video.duration;
+            }
+
+            stopProgressDrag() {
+                this.isDragging = false;
+                this.container.style.cursor = '';
+                this.progressHandle.style.transform = 'translateY(-50%)';
+            }
+
+            showControls() {
+                this.controls.classList.add('show');
+                clearTimeout(this.controlsTimeout);
+                this.controlsTimeout = setTimeout(() => {
+                    this.hideControls();
+                }, 3000);
+            }
+
+            hideControls() {
+                if (!this.isDragging && !this.activeDropdown) {
+                    this.controls.classList.remove('show');
+                }
+            }
+
+            handleKeyDown(e) {
+                // Ignore if typing in an input field
+                if (e.target.tagName === 'INPUT') return;
+                
+                switch (e.key) {
+                    case ' ':
+                        e.preventDefault();
+                        this.togglePlayPause();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        this.rewind();
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        this.forward();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        this.setVolume(Math.min(100, parseInt(this.volumeSlider.value) + 5));
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        this.setVolume(Math.max(0, parseInt(this.volumeSlider.value) - 5));
+                        break;
+                    case 'm':
+                    case 'M':
+                        e.preventDefault();
+                        this.toggleMute();
+                        break;
+                    case 'f':
+                    case 'F':
+                        e.preventDefault();
+                        this.toggleFullscreen();
+                        break;
+                    case '>':
+                    case '.':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                            const currentIndex = speeds.indexOf(this.currentSpeed);
+                            if (currentIndex < speeds.length - 1) {
+                                this.setPlaybackSpeed(speeds[currentIndex + 1]);
+                            }
+                        }
+                        break;
+                    case '<':
+                    case ',':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                            const currentIndex = speeds.indexOf(this.currentSpeed);
+                            if (currentIndex > 0) {
+                                this.setPlaybackSpeed(speeds[currentIndex - 1]);
+                            }
+                        }
+                        break;
+                    case '?':
+                        e.preventDefault();
+                        this.shortcutsPanel.classList.toggle('show');
+                        break;
+                    case 'Escape':
+                        this.closeAllDropdowns();
+                        this.shortcutsPanel.classList.remove('show');
+                        break;
+                }
+            }
+
+            closeAllDropdowns() {
+                if (this.activeDropdown) {
+                    this.activeDropdown.classList.remove('show');
+                    this.activeDropdown = null;
+                }
+            }
+
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                seconds = Math.floor(seconds % 60);
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+        }
+
+        // Initialize the video player when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const player = new ProfessionalVideoPlayer();
+        });
+    </script>
+</body>
+</html>
